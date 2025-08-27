@@ -1,15 +1,14 @@
 package toolchain
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 )
 
-// CheckToolchain prüft, ob die Cross-Compiler vorhanden sind
-func CheckToolchain(prefix string) {
-	_, err := exec.LookPath(prefix + "gcc")
-	if err != nil {
-		log.Fatalf("Toolchain nicht gefunden: %s", prefix+"gcc")
+func CheckToolchain(cross string) {
+	if err := exec.Command(cross+"gcc", "--version").Run(); err != nil {
+		log.Fatalf("Toolchain %s nicht gefunden", cross)
 	}
-	log.Println("Toolchain gefunden:", prefix)
+	fmt.Println("Toolchain gefunden:", cross)
 }

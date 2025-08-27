@@ -86,3 +86,50 @@ option check_signature 0
 	os.MkdirAll(filepath.Join(rootfs, "var/lib/opkg"), 0755)
 	os.MkdirAll(filepath.Join(rootfs, "overlay"), 0755)
 }
+
+// DownloadPackage lädt ein GNU-Paket herunter und entpackt es
+func DownloadPackage(pkg, dest string) string {
+	fmt.Printf("Downloading %s...\n", pkg)
+	utils.ProgressBar(pkg+" Download", 3)
+
+	version, ok := pkgVersions[pkg]
+	if !ok {
+		log.Fatalf("Keine Version für Paket %s definiert", pkg)
+	}
+
+	url := fmt.Sprintf("https://ftp.gnu.org/gnu/%s/%s-%s.tar.gz", pkg, pkg, version)
+	tarball := filepath.Join(dest, pkg+".tar.gz")
+	if err := command.RunCommandLive("wget", "-O", tarball, url); err != nil {
+		log.Fatalf("Fehler beim Download von %s: %v", pkg, err)
+	}
+
+	srcDir := filepath.Join(dest, pkg)
+	if err := command.RunCommandLive("mkdir", "-p", srcDir); err != nil {
+		log.Fatalf("Fehler beim Erstellen von %s: %v", srcDir, err)
+	}
+	if err := command.RunCommandLive("tar", "xzf", tarball, "-C", srcDir, "--strip-components=1"); err != nil {
+		log.Fatalf("Fehler beim Entpacken von %s: %v", pkg, err)
+	}
+
+	fmt.Println(pkg, "heruntergeladen:", srcDir)
+	return srcDir
+}
+
+// BuildPackage konfiguriert, baut und installiert ein Paket ins RootFS
+func BuildPackage(srcDir, rootfs, cross string) {
+	if err := os.Chdir(srcDir); err != nil {
+		log.Fatalf("Fehler beim Wechseln ins Paketverzeichnis: %v", err)
+	}
+
+	if err := exec.Command("./configure", "--host="+cross, "--prefix="+rootfs).Run(); err != nil {
+		log.Fatalf("Fehler beim Konfigurieren von %s: %v", srcDir, err)
+	}
+	if err := exec.Command("make").Run(); err != nil {
+		log.Fatalf("Fehler beim Bauen von %s: %v", srcDir, err)
+	}
+	if err := exec.Command("make", "install").Run(); err != nil {
+		log.Fatalf("Fehler beim Installieren von %s: %v", srcDir, err)
+	}
+
+	log.Println("Package gebaut:", srcDir)
+}

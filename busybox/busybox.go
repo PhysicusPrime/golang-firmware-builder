@@ -3,16 +3,14 @@ package busybox
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
-
-	"os"
 
 	"github.com/PhysicusPrime/golang-firmware-builder/command"
 	"github.com/PhysicusPrime/golang-firmware-builder/utils"
 )
 
-// DownloadBusyBox lädt BusyBox herunter und entpackt sie
 func DownloadBusyBox(dest string) string {
 	fmt.Println("Downloading BusyBox...")
 	utils.ProgressBar("BusyBox Download", 3)
@@ -24,7 +22,7 @@ func DownloadBusyBox(dest string) string {
 	}
 
 	srcDir := filepath.Join(dest, "busybox")
-	if err := os.MkdirAll(srcDir, 0755); err != nil {
+	if err := command.RunCommandLive("mkdir", "-p", srcDir); err != nil {
 		log.Fatalf("Fehler beim Erstellen von %s: %v", srcDir, err)
 	}
 	if err := command.RunCommandLive("tar", "xjf", tarball, "-C", srcDir, "--strip-components=1"); err != nil {
@@ -35,7 +33,6 @@ func DownloadBusyBox(dest string) string {
 	return srcDir
 }
 
-// PrepareBusyBox setzt defconfig und patcht .config (z.B. CONFIG_TC deaktivieren)
 func PrepareBusyBox(srcDir, cross string) {
 	if err := os.Chdir(srcDir); err != nil {
 		log.Fatalf("Fehler beim Wechseln ins BusyBox-Verzeichnis: %v", err)
