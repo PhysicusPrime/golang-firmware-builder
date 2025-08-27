@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// ProgressBar zeigt eine einfache ASCII-Fortschrittsanzeige
 func ProgressBar(task string, durationSec int) {
 	fmt.Printf("%s: [", task)
 	for i := 0; i < 50; i++ {

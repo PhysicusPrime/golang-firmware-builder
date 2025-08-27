@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/PhysicusPrime/golang-firmware-builder/busybox"
 	"github.com/PhysicusPrime/golang-firmware-builder/command"
@@ -13,6 +14,31 @@ import (
 	"github.com/PhysicusPrime/golang-firmware-builder/toolchain"
 	"github.com/PhysicusPrime/golang-firmware-builder/utils"
 )
+
+// PrepareBusyBox setzt defconfig und patcht .config (z.B. CONFIG_TC deaktivieren)
+func PrepareBusyBox(srcDir, cross string) {
+	if err := os.Chdir(srcDir); err != nil {
+		log.Fatalf("Fehler beim Wechseln ins BusyBox-Verzeichnis: %v", err)
+	}
+
+	fmt.Println("Setze defconfig für BusyBox...")
+	if err := command.RunCommandLive("make", "defconfig"); err != nil {
+		log.Fatalf("Fehler beim make defconfig: %v", err)
+	}
+
+	configPath := filepath.Join(srcDir, ".config")
+	b, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Fatalf("Fehler beim Lesen der .config: %v", err)
+	}
+
+	data := strings.ReplaceAll(string(b), "CONFIG_TC=y", "CONFIG_TC=n")
+	if err := os.WriteFile(configPath, []byte(data), 0644); err != nil {
+		log.Fatalf("Fehler beim Schreiben der .config: %v", err)
+	}
+
+	fmt.Println("BusyBox defconfig gepatcht (TC deaktiviert).")
+}
 
 func main() {
 	home, err := os.UserHomeDir()
@@ -58,7 +84,7 @@ func main() {
 
 	// Andere Pakete
 	pkgs := []string{"bash", "make", "cmake", "autoconf", "automake", "binutils", "libtool", "fdisk", "parted"}
-	for _, pkg := range pkks {
+	for _, pkg := range pkgs { // ⚠ Korrektur: "pkks" -> "pkgs"
 		fmt.Printf("Download & Build %s...\n", pkg)
 		utils.ProgressBar(pkg+" Download", 2)
 		src := packages.DownloadPackage(pkg, downloadsDir)

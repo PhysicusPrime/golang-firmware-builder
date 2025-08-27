@@ -2,32 +2,40 @@ package busybox
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
-	utils "command-line-argumentsC:\\Users\\hexzhen3x7\\GoLang-Buildsystem\\utils\\progress.go"
+	"os"
+
 	"github.com/PhysicusPrime/golang-firmware-builder/command"
+	"github.com/PhysicusPrime/golang-firmware-builder/utils"
 )
 
+// DownloadBusyBox lädt BusyBox herunter und entpackt sie
 func DownloadBusyBox(dest string) string {
 	fmt.Println("Downloading BusyBox...")
 	utils.ProgressBar("BusyBox Download", 3)
 
 	url := "https://busybox.net/downloads/busybox-1.36.0.tar.bz2"
 	tarball := filepath.Join(dest, "busybox.tar.bz2")
-	command.RunCommandLive("wget", "-O", tarball, url)
+	if err := command.RunCommandLive("wget", "-O", tarball, url); err != nil {
+		log.Fatalf("Fehler beim Download von BusyBox: %v", err)
+	}
 
 	srcDir := filepath.Join(dest, "busybox")
-	command.RunCommandLive("mkdir", "-p", srcDir)
-	command.RunCommandLive("tar", "xjf", tarball, "-C", srcDir, "--strip-components=1")
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		log.Fatalf("Fehler beim Erstellen von %s: %v", srcDir, err)
+	}
+	if err := command.RunCommandLive("tar", "xjf", tarball, "-C", srcDir, "--strip-components=1"); err != nil {
+		log.Fatalf("Fehler beim Entpacken von BusyBox: %v", err)
+	}
 
 	fmt.Println("BusyBox heruntergeladen:", srcDir)
 	return srcDir
 }
 
+// PrepareBusyBox setzt defconfig und patcht .config (z.B. CONFIG_TC deaktivieren)
 func PrepareBusyBox(srcDir, cross string) {
 	if err := os.Chdir(srcDir); err != nil {
 		log.Fatalf("Fehler beim Wechseln ins BusyBox-Verzeichnis: %v", err)
@@ -39,13 +47,13 @@ func PrepareBusyBox(srcDir, cross string) {
 	}
 
 	configPath := filepath.Join(srcDir, ".config")
-	b, err := ioutil.ReadFile(configPath)
+	b, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("Fehler beim Lesen der .config: %v", err)
 	}
 
 	data := strings.ReplaceAll(string(b), "CONFIG_TC=y", "CONFIG_TC=n")
-	if err := ioutil.WriteFile(configPath, []byte(data), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(data), 0644); err != nil {
 		log.Fatalf("Fehler beim Schreiben der .config: %v", err)
 	}
 

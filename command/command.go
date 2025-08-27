@@ -6,6 +6,7 @@ import (
 	"os/exec"
 )
 
+// RunCommandLive führt einen Befehl aus und zeigt stdout/stderr live an
 func RunCommandLive(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	stdout, _ := cmd.StdoutPipe()

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 )
 
+// CreateDirs erstellt beliebig viele Verzeichnisse
 func CreateDirs(dirs ...string) {
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0755); err != nil {
@@ -16,6 +17,7 @@ func CreateDirs(dirs ...string) {
 	}
 }
 
+// SetupRootFS erstellt die RootFS-Struktur inklusive Devices
 func SetupRootFS(rootfs string) {
 	dirs := []string{
 		"bin", "sbin", "etc", "proc", "sys", "dev", "tmp",
