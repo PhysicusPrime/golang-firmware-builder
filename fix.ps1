@@ -52,3 +52,14 @@ git branch -M $Branch
 git push -u origin $Branch
 
 Write-Host "[*] Fertig! Repository auf $Branch gepusht."
+$ModuleName = "github.com/PhysicusPrime/golang-firmware-builder"
+
+Get-ChildItem -Recurse -Filter *.go | ForEach-Object {
+    $file = $_.FullName
+    $content = Get-Content $file
+
+    $content = $content -replace '"rpi4-firmware-builder/utils"', ('"' + $ModuleName + '/utils"')
+    $content = $content -replace '"rpi4-firmware-builder/command"', ('"' + $ModuleName + '/command"')
+
+    Set-Content -Path $file -Value $content
+}
