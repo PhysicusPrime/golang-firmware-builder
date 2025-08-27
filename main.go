@@ -114,7 +114,12 @@ func main() {
 		utils.ProgressBar(pkg+" Download", 2)
 		src := packages.DownloadPackage(pkg, downloadsDir)
 		utils.ProgressBar(pkg+" Build", 4)
-		packages.BuildPackage(src, rootfsDir, cross)
+
+		if pkg == "bash" {
+			packages.BuildBashPackage(src, rootfsDir, cross)
+		} else {
+			packages.BuildPackage(src, rootfsDir, cross)
+		}
 	}
 
 	// Opkg

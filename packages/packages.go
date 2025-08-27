@@ -24,6 +24,48 @@ var pkgVersions = map[string]string{
 	"parted":   "3.5",
 }
 
+// BuildBashPackage baut Bash für Cross-Compile ins RootFS
+func BuildBashPackage(srcDir, rootfs, cross string) {
+	if err := os.Chdir(srcDir); err != nil {
+		log.Fatalf("Fehler beim Wechseln ins Bash-Verzeichnis: %v", err)
+	}
+
+	// Konfigurations-Flags für Cross-Compile
+	configureCmd := exec.Command(
+		"./configure",
+		"--host="+cross,
+		"--prefix="+rootfs,
+		"--disable-nls",         // keine Lokalisierung
+		"--without-bash-malloc", // alternative Speicherverwaltung
+		"--enable-static",       // statisch kompilieren
+		"--disable-shared",      // keine Shared Libraries
+	)
+	configureCmd.Env = append(os.Environ(), "CC="+cross+"gcc", "CFLAGS=-static", "LDFLAGS=-static")
+	configureCmd.Stdout = os.Stdout
+	configureCmd.Stderr = os.Stderr
+	if err := configureCmd.Run(); err != nil {
+		log.Fatalf("Fehler beim Konfigurieren von Bash: %v", err)
+	}
+
+	// make
+	makeCmd := exec.Command("make")
+	makeCmd.Stdout = os.Stdout
+	makeCmd.Stderr = os.Stderr
+	if err := makeCmd.Run(); err != nil {
+		log.Fatalf("Fehler beim Bauen von Bash: %v", err)
+	}
+
+	// make install
+	makeInstall := exec.Command("make", "install")
+	makeInstall.Stdout = os.Stdout
+	makeInstall.Stderr = os.Stderr
+	if err := makeInstall.Run(); err != nil {
+		log.Fatalf("Fehler beim Installieren von Bash: %v", err)
+	}
+
+	log.Println("Bash erfolgreich gebaut und ins RootFS installiert:", srcDir)
+}
+
 // DownloadOpkg lädt Opkg herunter und entpackt es
 func DownloadOpkg(dest string) string {
 	fmt.Println("Downloading Opkg...")
