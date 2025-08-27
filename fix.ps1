@@ -21,12 +21,21 @@ if (-not (Test-Path "go.mod")) {
 }
 
 # 3️⃣ Alle Go-Files prüfen und Imports korrigieren
+
+# Alle Go-Files prüfen und Imports korrigieren
 Write-Host "[*] Korrigiere Import-Pfade in allen .go Dateien..."
 Get-ChildItem -Recurse -Filter *.go | ForEach-Object {
-    (Get-Content $_.FullName) -replace '"utils"', '"'+$ModuleName+'/utils"' `
-                                -replace '"command"', '"'+$ModuleName+'/command"' |
-    Set-Content $_.FullName
+    $file = $_.FullName
+    $content = Get-Content $file
+
+    # Jede Ersetzung einzeln
+    $content = $content -replace '"utils"', ('"' + $ModuleName + '/utils"')
+    $content = $content -replace '"command"', ('"' + $ModuleName + '/command"')
+    
+    # Datei zurückschreiben
+    Set-Content -Path $file -Value $content
 }
+
 
 # 4️⃣ Git Status anzeigen
 Write-Host "[*] Git Status:"
