@@ -1,11 +1,10 @@
-package main
+package toolchain
 
 import (
 	"log"
 	"os/exec"
 )
 
-// CheckToolchain prüft, ob die Cross-Compiler Toolchain existiert
 func CheckToolchain(prefix string) {
 	_, err := exec.LookPath(prefix + "gcc")
 	if err != nil {

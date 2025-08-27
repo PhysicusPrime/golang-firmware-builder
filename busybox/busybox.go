@@ -1,4 +1,4 @@
-package main
+package busybox
 
 import (
 	"fmt"
@@ -8,10 +8,26 @@ import (
 	"path/filepath"
 	"strings"
 
-	"rpi4-firmware-builder/command"
+	utils "command-line-argumentsC:\\Users\\hexzhen3x7\\GoLang-Buildsystem\\utils\\progress.go"
+	"github.com/PhysicusPrime/golang-firmware-builder/command"
 )
 
-// PrepareBusyBox setzt defconfig und deaktiviert TC
+func DownloadBusyBox(dest string) string {
+	fmt.Println("Downloading BusyBox...")
+	utils.ProgressBar("BusyBox Download", 3)
+
+	url := "https://busybox.net/downloads/busybox-1.36.0.tar.bz2"
+	tarball := filepath.Join(dest, "busybox.tar.bz2")
+	command.RunCommandLive("wget", "-O", tarball, url)
+
+	srcDir := filepath.Join(dest, "busybox")
+	command.RunCommandLive("mkdir", "-p", srcDir)
+	command.RunCommandLive("tar", "xjf", tarball, "-C", srcDir, "--strip-components=1")
+
+	fmt.Println("BusyBox heruntergeladen:", srcDir)
+	return srcDir
+}
+
 func PrepareBusyBox(srcDir, cross string) {
 	if err := os.Chdir(srcDir); err != nil {
 		log.Fatalf("Fehler beim Wechseln ins BusyBox-Verzeichnis: %v", err)
@@ -34,23 +50,4 @@ func PrepareBusyBox(srcDir, cross string) {
 	}
 
 	fmt.Println("BusyBox defconfig gepatcht (TC deaktiviert).")
-}
-
-// BuildBusyBox kompiliert und installiert BusyBox ins RootFS
-func BuildBusyBox(srcDir, rootfs, cross string) {
-	if err := os.Chdir(srcDir); err != nil {
-		log.Fatalf("Fehler beim Wechseln ins BusyBox-Verzeichnis: %v", err)
-	}
-
-	fmt.Println("BusyBox bauen...")
-	if err := command.RunCommandLive("make", "ARCH=arm64", "CROSS_COMPILE="+cross); err != nil {
-		log.Fatalf("Fehler beim BusyBox-Build: %v", err)
-	}
-
-	fmt.Println("BusyBox installieren...")
-	if err := command.RunCommandLive("make", "ARCH=arm64", "CROSS_COMPILE="+cross, "CONFIG_PREFIX="+rootfs, "install"); err != nil {
-		log.Fatalf("Fehler beim Installieren von BusyBox: %v", err)
-	}
-
-	fmt.Println("BusyBox erfolgreich installiert in:", rootfs)
 }

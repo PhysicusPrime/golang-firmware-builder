@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"rpi4-firmware-builder/command"
-	"rpi4-firmware-builder/utils"
+	"github.com/PhysicusPrime/golang-firmware-builder/command"
+	"github.com/PhysicusPrime/golang-firmware-builder/utils"
 )
 
 // DownloadBusyBox lädt BusyBox herunter und entpackt
